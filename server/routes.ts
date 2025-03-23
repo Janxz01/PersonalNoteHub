@@ -145,7 +145,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/notes", authenticateToken, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
-      const notes = await storage.getNotesByUserId(userId);
+      console.log("GET /api/notes - User ID from token:", userId, "Type:", typeof userId);
+      
+      // Get the user to verify their existence
+      const user = await storage.getUser(userId);
+      console.log("User found:", user);
+      
+      const notes = await storage.getNotesByUserId(String(userId));
+      console.log("Notes found for user:", notes);
+      
       res.json(notes);
     } catch (error) {
       console.error("Error getting notes:", error);
@@ -182,8 +190,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new note
   app.post("/api/notes", authenticateToken, async (req: Request, res: Response) => {
     try {
+      console.log("POST /api/notes - Request body:", req.body);
       const noteData = insertNoteSchema.parse(req.body);
       const userId = (req as any).user.id;
+      console.log("Creating note for user ID:", userId);
       const generateSummary = req.body.generateSummary === true;
       
       // Create the note
@@ -191,6 +201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...noteData,
         userId
       });
+      
+      console.log("Note created successfully:", note);
       
       // Generate AI summary if requested
       if (generateSummary && process.env.OPENAI_API_KEY) {
@@ -202,6 +214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ...noteData,
             summary
           });
+          console.log("Note updated with summary:", updatedNote);
           return res.status(201).json(updatedNote);
         } catch (summaryError) {
           console.error("Error generating summary:", summaryError);

@@ -46,7 +46,12 @@ export class MongoStorage implements IStorage {
     
     // Connect to MongoDB if not already connected
     if (mongoose.connection.readyState === 0) {
-      mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/notekeeper');
+      console.log("Connecting to MongoDB:", process.env.MONGODB_URI || 'mongodb://localhost:27017/notekeeper');
+      mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/notekeeper')
+        .then(() => console.log("MongoDB connected successfully"))
+        .catch(err => console.error("MongoDB connection error:", err));
+    } else {
+      console.log("MongoDB connection state:", mongoose.connection.readyState);
     }
   }
   
@@ -264,13 +269,23 @@ export class MemStorage implements IStorage {
   }
 
   async getNotesByUserId(userId: string): Promise<Note[]> {
-    return Array.from(this.notes.values())
-      .filter((note) => String(note.userId) === userId)
+    console.log("MemStorage - Getting notes for userId:", userId);
+    console.log("MemStorage - All notes:", Array.from(this.notes.entries()));
+    
+    const filteredNotes = Array.from(this.notes.values())
+      .filter((note) => {
+        const match = String(note.userId) === userId;
+        console.log(`MemStorage - Note ${note.id} userId: ${note.userId} (${typeof note.userId}), target userId: ${userId} (${typeof userId}), match: ${match}`);
+        return match;
+      })
       .sort((a, b) => {
         const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
         const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
         return bTime - aTime;
       });
+    
+    console.log("MemStorage - Filtered notes:", filteredNotes);
+    return filteredNotes;
   }
 
   async getNoteById(id: string): Promise<Note | null> {
@@ -316,5 +331,8 @@ export class MemStorage implements IStorage {
 }
 
 // Export the appropriate storage implementation
-export const useMongoStorage = process.env.MONGODB_URI !== undefined;
+// For now, we'll just use the MemStorage for reliable local development
+// Change this to use MongoDB in production with proper connection string
+export const useMongoStorage = false; // process.env.MONGODB_URI !== undefined;
+console.log("Using MongoDB Storage:", useMongoStorage, "MONGODB_URI defined:", process.env.MONGODB_URI !== undefined);
 export const storage = useMongoStorage ? new MongoStorage() : new MemStorage();
