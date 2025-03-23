@@ -105,6 +105,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { expiresIn: JWT_EXPIRY }
       );
       
+      // For debugging
+      console.log("Login successful for:", user.email);
+      
       res.json({
         token,
         user: {

@@ -37,7 +37,9 @@ export default function Login() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
+      console.log("Attempting to login with:", data.email);
       await login(data.email, data.password);
+      console.log("Login successful, navigating to home");
       toast({
         title: "Login successful",
         description: "Welcome back to NoteKeeper!",

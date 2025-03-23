@@ -61,6 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login function
   const login = async (email: string, password: string) => {
     try {
+      console.log("Attempting login with email:", email);
+      
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -72,10 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!res.ok) {
         const error = await res.json();
+        console.error("Login failed with status:", res.status);
         throw new Error(error.message || "Login failed");
       }
 
       const data = await res.json();
+      console.log("Login successful, received token and user data");
       localStorage.setItem("authToken", data.token);
       setUser(data.user);
     } catch (error) {

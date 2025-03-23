@@ -209,7 +209,7 @@ export class MemStorage implements IStorage {
   }
 
   async createUser(userData: InsertUser): Promise<User> {
-    const id = String(this.userId++);
+    const id = this.userId++;
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
     
@@ -221,14 +221,18 @@ export class MemStorage implements IStorage {
       createdAt: new Date()
     };
     
-    this.users.set(id, user);
+    this.users.set(String(id), user);
     return user;
   }
 
   async getNotesByUserId(userId: string): Promise<Note[]> {
-    return Array.from(this.notes.values()).filter(
-      (note) => note.userId === userId
-    ).sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    return Array.from(this.notes.values())
+      .filter((note) => note.userId === userId)
+      .sort((a, b) => {
+        const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return bTime - aTime;
+      });
   }
 
   async getNoteById(id: string): Promise<Note | null> {
