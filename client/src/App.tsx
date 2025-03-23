@@ -29,25 +29,27 @@ function Router() {
       <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
         <ThemeToggle />
       </div>
-      <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route path="/">
-        {() => (
-          <ProtectedRoute>
-            <Notes />
-          </ProtectedRoute>
-        )}
-      </Route>
-      <Route path="/notes/:id">
-        {(params) => (
-          <ProtectedRoute>
-            <NoteDetail />
-          </ProtectedRoute>
-        )}
-      </Route>
-      <Route component={NotFound} />
-    </Switch>
+      <div className="overflow-x-hidden"> {/* Added overflow-x-hidden here */}
+        <Switch>
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
+          <Route path="/">
+            {() => (
+              <ProtectedRoute>
+                <Notes />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route path="/notes/:id">
+            {(params) => (
+              <ProtectedRoute>
+                <NoteDetail />
+              </ProtectedRoute>
+            )}
+          </Route>
+          <Route component={NotFound} />
+        </Switch>
+      </div>
     </>
   );
 }

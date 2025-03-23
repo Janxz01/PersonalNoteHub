@@ -54,7 +54,7 @@ export default function NoteCard({ note, onEdit, onDelete, onClick }: NoteCardPr
 
   return (
     <div 
-      className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 w-full" // Added w-full for responsiveness
+      className="bg-card p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-border w-full min-h-[200px] flex flex-col justify-between" // Added w-full for responsiveness
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">
