@@ -28,8 +28,11 @@ export async function summarizeNote(text: string): Promise<string> {
     });
 
     return response.choices[0].message.content || "Failed to generate summary";
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating summary with OpenAI:", error);
-    throw new Error("Failed to generate summary");
+    if (error?.error?.type === 'insufficient_quota') {
+      throw new Error("OpenAI API quota exceeded. Please check your API key and quota.");
+    }
+    throw new Error("Failed to generate summary: " + (error?.message || "Unknown error"));
   }
 }
