@@ -36,6 +36,7 @@ export const loginUserSchema = z.object({
 export const insertNoteSchema = createInsertSchema(notes).pick({
   title: true,
   content: true,
+  summary: true,
 });
 
 export const updateNoteSchema = createInsertSchema(notes).pick({

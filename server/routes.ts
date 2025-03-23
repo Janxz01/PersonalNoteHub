@@ -166,7 +166,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure the note belongs to the authenticated user
-      if (note.userId !== userId) {
+      // Convert userId to number if comparing with a number
+      const userIdNum = typeof note.userId === 'number' ? userId : parseInt(userId, 10);
+      if (note.userId !== userIdNum) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -235,7 +237,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Note not found" });
       }
       
-      if (existingNote.userId !== userId) {
+      // Convert userId to number if comparing with a number
+      const userIdNum = typeof existingNote.userId === 'number' ? userId : parseInt(userId, 10);
+      if (existingNote.userId !== userIdNum) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -282,7 +286,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Note not found" });
       }
       
-      if (note.userId !== userId) {
+      // Convert userId to number if comparing with a number
+      const userIdNum = typeof note.userId === 'number' ? userId : parseInt(userId, 10);
+      if (note.userId !== userIdNum) {
         return res.status(403).json({ message: "Access denied" });
       }
       
@@ -316,7 +322,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Note not found" });
       }
       
-      if (note.userId !== userId) {
+      // Convert userId to number if comparing with a number
+      const userIdNum = typeof note.userId === 'number' ? userId : parseInt(userId, 10);
+      if (note.userId !== userIdNum) {
         return res.status(403).json({ message: "Access denied" });
       }
       
