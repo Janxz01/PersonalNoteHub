@@ -209,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(note);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: formatError(error).message });
+        return res.status(400).json({ message: fromZodError(error).message });
       }
       console.error("Error creating note:", error);
       res.status(500).json({ message: "Failed to create note" });
@@ -258,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedNote);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: formatError(error).message });
+        return res.status(400).json({ message: fromZodError(error).message });
       }
       console.error("Error updating note:", error);
       res.status(500).json({ message: "Failed to update note" });
