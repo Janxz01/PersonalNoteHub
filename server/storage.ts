@@ -135,8 +135,14 @@ export class MongoStorage implements IStorage {
     try {
       console.log("Creating note with userId:", noteData.userId);
       
+      // Convert to ObjectId if the userId is a valid ObjectId, otherwise keep as is
+      let userId: any = noteData.userId;
+      if (mongoose.Types.ObjectId.isValid(userId)) {
+        userId = mongoose.Types.ObjectId.createFromHexString(userId);
+      }
+      
       const note = await this.NoteModel.create({
-        userId: noteData.userId,
+        userId: userId,
         title: noteData.title,
         content: noteData.content,
         summary: noteData.summary || null
