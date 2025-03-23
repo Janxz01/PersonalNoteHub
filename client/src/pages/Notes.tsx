@@ -38,6 +38,16 @@ export default function Notes() {
     queryKey: ["/api/notes"],
     enabled: isAuthenticated,
   });
+  
+  // Log data fetching results
+  useEffect(() => {
+    if (isError) {
+      console.error("Error fetching notes:", error);
+    }
+    if (notes && notes.length >= 0) {
+      console.log("Notes fetched successfully:", notes);
+    }
+  }, [notes, isError, error]);
 
   // Delete note mutation
   const deleteMutation = useMutation({
@@ -72,16 +82,18 @@ export default function Notes() {
   // Confirm delete
   const confirmDelete = () => {
     if (currentNote) {
-      deleteMutation.mutate(currentNote.id);
+      deleteMutation.mutate(String(currentNote.id));
     }
   };
 
   // Filter notes by search term
-  const filteredNotes = notes.filter(
-    (note) =>
-      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredNotes = Array.isArray(notes) 
+    ? notes.filter(
+        (note: Note) =>
+          note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          note.content.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   // Loading skeletons
   if (isLoading) {
@@ -166,7 +178,7 @@ export default function Notes() {
           <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
             <h3 className="mt-2 text-sm font-medium text-gray-900">No notes found</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {notes.length === 0
+              {Array.isArray(notes) && notes.length === 0
                 ? "Get started by creating a new note."
                 : "No notes match your search criteria."}
             </p>

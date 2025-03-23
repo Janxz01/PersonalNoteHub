@@ -63,15 +63,27 @@ export default function NoteEditor({ isOpen, note, onClose }: NoteEditorProps) {
   // Create note mutation
   const createNoteMutation = useMutation({
     mutationFn: async (data: NoteFormValues) => {
+      console.log("Creating note with data:", data);
       const res = await apiRequest("POST", "/api/notes", data);
-      return res.json();
+      const result = await res.json();
+      console.log("Note creation result:", result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Note created successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       onClose();
       toast({
         title: "Note created",
         description: "Your note has been successfully created.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error creating note:", error);
+      toast({
+        title: "Failed to create note",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
       });
     },
   });
