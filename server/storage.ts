@@ -96,7 +96,18 @@ export class MongoStorage implements IStorage {
   // Note operations
   async getNotesByUserId(userId: string): Promise<Note[]> {
     try {
-      const notes = await this.NoteModel.find({ userId }).sort({ updatedAt: -1 }).lean();
+      console.log("Looking for notes with userId:", userId);
+      // Some MongoDB implementations like Mongoose may not automatically convert string to ObjectId
+      // Convert if it's a mongoose ObjectId, otherwise keep as string
+      let query: any;
+      if (mongoose.Types.ObjectId.isValid(userId)) {
+        query = { userId: mongoose.Types.ObjectId.createFromHexString(userId) };
+      } else {
+        query = { userId };
+      }
+
+      const notes = await this.NoteModel.find(query).sort({ updatedAt: -1 }).lean();
+      console.log("Found notes:", notes);
       return notes.map(this.mapNoteToSchema);
     } catch (error) {
       console.error("Error getting notes by user id:", error);
@@ -117,12 +128,22 @@ export class MongoStorage implements IStorage {
   
   async createNote(noteData: InsertNote & { userId: string }): Promise<Note> {
     try {
+      console.log("Creating note with userId:", noteData.userId);
+      
+      // Convert to ObjectId if the userId is a valid ObjectId, otherwise keep as is
+      let userId: any = noteData.userId;
+      if (mongoose.Types.ObjectId.isValid(userId)) {
+        userId = mongoose.Types.ObjectId.createFromHexString(userId);
+      }
+      
       const note = await this.NoteModel.create({
-        userId: noteData.userId,
+        userId: userId,
         title: noteData.title,
-        content: noteData.content
+        content: noteData.content,
+        summary: noteData.summary || null
       });
       
+      console.log("Created note:", note);
       return this.mapNoteToSchema(note.toObject());
     } catch (error) {
       console.error("Error creating note:", error);
@@ -173,7 +194,7 @@ export class MongoStorage implements IStorage {
   private mapNoteToSchema(note: any): Note {
     return {
       id: note._id.toString(),
-      userId: note.userId.toString(),
+      userId: note.userId && typeof note.userId.toString === 'function' ? note.userId.toString() : note.userId,
       title: note.title,
       content: note.content,
       summary: note.summary,
