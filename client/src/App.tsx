@@ -8,6 +8,7 @@ import Register from "@/pages/Register";
 import Notes from "@/pages/Notes";
 import NoteDetail from "@/pages/NoteDetail";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useEffect, lazy, Suspense } from "react";
 
 function Router() {
@@ -26,8 +27,20 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      <Route path="/" component={Notes} />
-      <Route path="/notes/:id" component={NoteDetail} />
+      <Route path="/">
+        {() => (
+          <ProtectedRoute>
+            <Notes />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/notes/:id">
+        {(params) => (
+          <ProtectedRoute>
+            <NoteDetail />
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
