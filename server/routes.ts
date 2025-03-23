@@ -194,7 +194,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (generateSummary && process.env.OPENAI_API_KEY) {
         try {
           const summary = await summarizeNote(noteData.content);
-          const updatedNote = await storage.updateNote(note.id, {
+          // Convert numeric id to string if needed
+          const noteIdStr = typeof note.id === 'number' ? String(note.id) : note.id;
+          const updatedNote = await storage.updateNote(noteIdStr, {
             ...noteData,
             summary
           });

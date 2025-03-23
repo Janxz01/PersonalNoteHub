@@ -195,6 +195,23 @@ export class MemStorage implements IStorage {
     this.notes = new Map();
     this.userId = 1;
     this.noteId = 1;
+    
+    // Add a test user for development
+    this.addTestUser();
+  }
+  
+  private async addTestUser() {
+    try {
+      const testUser = {
+        name: "Test User",
+        email: "test@example.com",
+        password: "password123"
+      };
+      await this.createUser(testUser);
+      console.log("Test user created: test@example.com / password123");
+    } catch (error) {
+      console.error("Failed to create test user:", error);
+    }
   }
 
   async getUser(id: string): Promise<User | null> {
@@ -227,7 +244,7 @@ export class MemStorage implements IStorage {
 
   async getNotesByUserId(userId: string): Promise<Note[]> {
     return Array.from(this.notes.values())
-      .filter((note) => note.userId === userId)
+      .filter((note) => String(note.userId) === userId)
       .sort((a, b) => {
         const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
         const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
@@ -240,20 +257,20 @@ export class MemStorage implements IStorage {
   }
 
   async createNote(noteData: InsertNote & { userId: string }): Promise<Note> {
-    const id = String(this.noteId++);
+    const id = this.noteId++;
     const now = new Date();
     
     const note: Note = {
       id,
-      userId: noteData.userId,
+      userId: parseInt(noteData.userId, 10),
       title: noteData.title,
       content: noteData.content,
-      summary: undefined,
+      summary: null,
       createdAt: now,
       updatedAt: now
     };
     
-    this.notes.set(id, note);
+    this.notes.set(String(id), note);
     return note;
   }
 

@@ -41,6 +41,7 @@ export const insertNoteSchema = createInsertSchema(notes).pick({
 export const updateNoteSchema = createInsertSchema(notes).pick({
   title: true,
   content: true,
+  summary: true,
 });
 
 // Types
