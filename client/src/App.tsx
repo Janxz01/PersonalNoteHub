@@ -2,6 +2,7 @@ import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -24,7 +25,11 @@ function Router() {
   }, [location]);
 
   return (
-    <Switch>
+    <>
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+      <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/">
@@ -43,6 +48,7 @@ function Router() {
       </Route>
       <Route component={NotFound} />
     </Switch>
+    </>
   );
 }
 
