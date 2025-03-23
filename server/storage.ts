@@ -333,6 +333,6 @@ export class MemStorage implements IStorage {
 // Export the appropriate storage implementation
 // For now, we'll just use the MemStorage for reliable local development
 // Change this to use MongoDB in production with proper connection string
-export const useMongoStorage = false; // process.env.MONGODB_URI !== undefined;
+export const useMongoStorage = process.env.MONGODB_URI !== undefined;
 console.log("Using MongoDB Storage:", useMongoStorage, "MONGODB_URI defined:", process.env.MONGODB_URI !== undefined);
 export const storage = useMongoStorage ? new MongoStorage() : new MemStorage();
