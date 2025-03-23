@@ -6,7 +6,7 @@ import { insertUserSchema, loginUserSchema, insertNoteSchema, updateNoteSchema }
 import bcrypt from "bcrypt";
 import { summarizeNote } from "./openai";
 import { ZodError } from "zod";
-import { formatError } from "zod-validation-error";
+import { fromZodError } from "zod-validation-error";
 
 // JWT secret key - should be in environment variable in production
 const JWT_SECRET = process.env.JWT_SECRET || "notekeeper-secret-key";
@@ -37,7 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use((err: Error, req: Request, res: Response, next: Function) => {
     console.error(err.stack);
     if (err instanceof ZodError) {
-      return res.status(400).json({ message: formatError(err).message });
+      return res.status(400).json({ message: fromZodError(err).message });
     }
     return res.status(500).json({ message: err.message || "Something went wrong" });
   });
@@ -74,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: formatError(error).message });
+        return res.status(400).json({ message: fromZodError(error).message });
       }
       console.error("Error registering user:", error);
       res.status(500).json({ message: "Failed to register user" });
@@ -115,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: formatError(error).message });
+        return res.status(400).json({ message: fromZodError(error).message });
       }
       console.error("Error logging in:", error);
       res.status(500).json({ message: "Failed to log in" });
