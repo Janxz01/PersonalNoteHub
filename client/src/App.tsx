@@ -26,7 +26,7 @@ function Router() {
 
   return (
     <>
-      <div className="fixed top-6 right-6 z-50">
+      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
         <ThemeToggle />
       </div>
       <Switch>

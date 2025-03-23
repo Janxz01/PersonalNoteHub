@@ -38,7 +38,7 @@ export default function Notes() {
     queryKey: ["/api/notes"],
     enabled: isAuthenticated,
   });
-  
+
   // Log data fetching results
   useEffect(() => {
     if (isError) {
@@ -87,7 +87,7 @@ export default function Notes() {
   };
 
   // Filter notes by search term
-  const filteredNotes = Array.isArray(notes) 
+  const filteredNotes = Array.isArray(notes)
     ? notes.filter(
         (note: Note) =>
           note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -206,7 +206,7 @@ export default function Notes() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 mb-8">
             {filteredNotes.map((note) => (
               <NoteCard
                 key={note.id}

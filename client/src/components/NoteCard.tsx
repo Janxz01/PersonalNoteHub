@@ -36,13 +36,13 @@ export default function NoteCard({ note, onEdit, onDelete, onClick }: NoteCardPr
     e.stopPropagation(); // Prevent card click
     generateSummaryMutation.mutate();
   };
-  
+
   // Handle edit button click
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     onEdit();
   };
-  
+
   // Handle delete button click
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
@@ -54,7 +54,7 @@ export default function NoteCard({ note, onEdit, onDelete, onClick }: NoteCardPr
 
   return (
     <div 
-      className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
+      className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 w-full" // Added w-full for responsiveness
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">
