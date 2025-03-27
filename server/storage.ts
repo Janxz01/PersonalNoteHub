@@ -1,4 +1,4 @@
-import { notes, users, type User, type InsertUser, type Note, type InsertNote, type UpdateNote } from "@shared/schema";
+import { notes, users, labels, type User, type InsertUser, type Note, type InsertNote, type UpdateNote, type Label, type InsertLabel, type UpdateLabel } from "@shared/schema";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
@@ -32,17 +32,34 @@ export interface IStorage {
   createNote(note: InsertNote & { userId: string }): Promise<Note>;
   updateNote(id: string, note: UpdateNote): Promise<Note | null>;
   deleteNote(id: string): Promise<boolean>;
+  
+  // Label operations
+  getLabelsByUserId(userId: string): Promise<Label[]>;
+  getLabelById(id: string): Promise<Label | null>;
+  createLabel(label: InsertLabel & { userId: string }): Promise<Label>;
+  updateLabel(id: string, label: UpdateLabel): Promise<Label | null>;
+  deleteLabel(id: string): Promise<boolean>;
 }
 
 // MongoDB implementation
 export class MongoStorage implements IStorage {
   private UserModel: mongoose.Model<any>;
   private NoteModel: mongoose.Model<any>;
+  private LabelModel: mongoose.Model<any>;
   
   constructor() {
+    // Define the label schema
+    const LabelSchema = new mongoose.Schema({
+      userId: { type: mongoose.Schema.Types.ObjectId, required: true },
+      name: { type: String, required: true },
+      color: { type: String, required: true, default: "#3b82f6" },
+      createdAt: { type: Date, default: Date.now }
+    });
+    
     // Initialize models if not already registered
     this.UserModel = mongoose.models.User || mongoose.model('User', UserSchema);
     this.NoteModel = mongoose.models.Note || mongoose.model('Note', NoteSchema);
+    this.LabelModel = mongoose.models.Label || mongoose.model('Label', LabelSchema);
     
     // Connect to MongoDB if not already connected
     if (mongoose.connection.readyState === 0) {
@@ -179,6 +196,80 @@ export class MongoStorage implements IStorage {
     }
   }
   
+  // Label operations
+  async getLabelsByUserId(userId: string): Promise<Label[]> {
+    try {
+      console.log("Looking for labels with userId:", userId);
+      let query: any;
+      if (mongoose.Types.ObjectId.isValid(userId)) {
+        query = { userId: mongoose.Types.ObjectId.createFromHexString(userId) };
+      } else {
+        query = { userId };
+      }
+
+      const labels = await this.LabelModel.find(query).sort({ name: 1 }).lean();
+      return labels.map(this.mapLabelToSchema);
+    } catch (error) {
+      console.error("Error getting labels by user id:", error);
+      return [];
+    }
+  }
+  
+  async getLabelById(id: string): Promise<Label | null> {
+    try {
+      const label = await this.LabelModel.findById(id).lean();
+      if (!label) return null;
+      return this.mapLabelToSchema(label);
+    } catch (error) {
+      console.error("Error getting label by id:", error);
+      return null;
+    }
+  }
+  
+  async createLabel(labelData: InsertLabel & { userId: string }): Promise<Label> {
+    try {
+      const label = await this.LabelModel.create({
+        userId: labelData.userId,
+        name: labelData.name,
+        color: labelData.color || "#3b82f6"
+      });
+      
+      return this.mapLabelToSchema(label.toObject());
+    } catch (error) {
+      console.error("Error creating label:", error);
+      throw new Error("Failed to create label");
+    }
+  }
+  
+  async updateLabel(id: string, labelData: UpdateLabel): Promise<Label | null> {
+    try {
+      const label = await this.LabelModel.findByIdAndUpdate(
+        id,
+        { 
+          name: labelData.name,
+          color: labelData.color || "#3b82f6"  // Ensure color always has a value
+        },
+        { new: true }
+      ).lean();
+      
+      if (!label) return null;
+      return this.mapLabelToSchema(label);
+    } catch (error) {
+      console.error("Error updating label:", error);
+      return null;
+    }
+  }
+  
+  async deleteLabel(id: string): Promise<boolean> {
+    try {
+      const result = await this.LabelModel.deleteOne({ _id: id });
+      return result.deletedCount > 0;
+    } catch (error) {
+      console.error("Error deleting label:", error);
+      return false;
+    }
+  }
+
   // Helper methods to map MongoDB documents to schema types
   private mapUserToSchema(user: any): User {
     return {
@@ -198,8 +289,20 @@ export class MongoStorage implements IStorage {
       content: note.content,
       summary: note.summary,
       pinned: note.pinned || false,
+      labels: note.labels || [],
+      archived: note.archived || false,
       createdAt: note.createdAt,
       updatedAt: note.updatedAt
+    };
+  }
+  
+  private mapLabelToSchema(label: any): Label {
+    return {
+      id: label._id.toString(),
+      userId: label.userId && typeof label.userId.toString === 'function' ? label.userId.toString() : label.userId,
+      name: label.name,
+      color: label.color,
+      createdAt: label.createdAt
     };
   }
 }
@@ -208,14 +311,18 @@ export class MongoStorage implements IStorage {
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private notes: Map<string, Note>;
+  private labels: Map<string, Label>;
   private userId: number;
   private noteId: number;
+  private labelId: number;
 
   constructor() {
     this.users = new Map();
     this.notes = new Map();
+    this.labels = new Map();
     this.userId = 1;
     this.noteId = 1;
+    this.labelId = 1;
     
     // Add a test user for development
     this.addTestUser();
@@ -303,6 +410,8 @@ export class MemStorage implements IStorage {
       content: noteData.content,
       summary: null,
       pinned: noteData.pinned || false,
+      labels: noteData.labels || [],
+      archived: noteData.archived || false,
       createdAt: now,
       updatedAt: now
     };
@@ -320,6 +429,8 @@ export class MemStorage implements IStorage {
       title: noteData.title,
       content: noteData.content,
       pinned: noteData.pinned !== undefined ? noteData.pinned : note.pinned,
+      labels: noteData.labels !== undefined ? noteData.labels : note.labels,
+      archived: noteData.archived !== undefined ? noteData.archived : note.archived,
       updatedAt: new Date()
     };
     
@@ -329,6 +440,54 @@ export class MemStorage implements IStorage {
 
   async deleteNote(id: string): Promise<boolean> {
     return this.notes.delete(id);
+  }
+  
+  // Label operations
+  async getLabelsByUserId(userId: string): Promise<Label[]> {
+    return Array.from(this.labels.values())
+      .filter((label) => String(label.userId) === userId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async getLabelById(id: string): Promise<Label | null> {
+    return this.labels.get(id) || null;
+  }
+
+  async createLabel(labelData: InsertLabel & { userId: string }): Promise<Label> {
+    const id = this.labelId++;
+    const now = new Date();
+    
+    const label: Label = {
+      id,
+      userId: parseInt(labelData.userId, 10),
+      name: labelData.name,
+      color: labelData.color || "#3b82f6",
+      createdAt: now
+    };
+    
+    this.labels.set(String(id), label);
+    return label;
+  }
+
+  async updateLabel(id: string, labelData: UpdateLabel): Promise<Label | null> {
+    const label = this.labels.get(id);
+    if (!label) return null;
+    
+    // Ensure we have a string for the color
+    const colorValue: string = labelData.color as string || label.color;
+    
+    const updatedLabel: Label = {
+      ...label,
+      name: labelData.name as string,
+      color: colorValue
+    };
+    
+    this.labels.set(id, updatedLabel);
+    return updatedLabel;
+  }
+
+  async deleteLabel(id: string): Promise<boolean> {
+    return this.labels.delete(id);
   }
 }
 

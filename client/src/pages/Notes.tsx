@@ -21,6 +21,7 @@ export default function Notes() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -36,7 +37,13 @@ export default function Notes() {
     isError,
     error,
   } = useQuery<Note[]>({
-    queryKey: ["/api/notes"],
+    queryKey: ["/api/notes", { archived: showArchived }],
+    queryFn: async ({ queryKey }) => {
+      const [endpoint, params] = queryKey;
+      const url = `${endpoint}?archived=${(params as any).archived}`;
+      const response = await apiRequest("GET", url);
+      return response.json();
+    },
     enabled: isAuthenticated,
   });
 
@@ -56,7 +63,7 @@ export default function Notes() {
       await apiRequest("DELETE", `/api/notes/${noteId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", { archived: showArchived }] });
       setShowDeleteModal(false);
       setCurrentNote(null);
     },
@@ -182,7 +189,17 @@ export default function Notes() {
       <Navbar onCreateNote={handleCreateNote} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">My Notes</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-semibold text-gray-900">
+              {showArchived ? "Archived Notes" : "My Notes"}
+            </h1>
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className="text-sm px-3 py-1 rounded border border-gray-300 hover:bg-gray-50"
+            >
+              {showArchived ? "Show Active Notes" : "Show Archived"}
+            </button>
+          </div>
           <div className="relative">
             <Input
               type="text"

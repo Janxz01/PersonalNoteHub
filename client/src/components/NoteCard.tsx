@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { Note } from "@shared/schema";
-import { Edit2Icon, Trash2Icon, ZapIcon, PinIcon } from "lucide-react";
+import { Edit2Icon, Trash2Icon, ZapIcon, PinIcon, ArchiveIcon } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -46,6 +46,23 @@ export default function NoteCard({ note, onEdit, onDelete, onClick }: NoteCardPr
       });
     },
   });
+  
+  // Toggle archive mutation
+  const toggleArchiveMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("PATCH", `/api/notes/${note.id}/archive`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/notes/${note.id}`] });
+      toast({
+        title: note.archived ? "Note restored" : "Note archived",
+        description: note.archived 
+          ? "The note has been moved back to active notes." 
+          : "The note has been archived.",
+      });
+    },
+  });
 
   // Handle generate summary button click
   const handleGenerateSummary = (e: React.MouseEvent) => {
@@ -70,6 +87,12 @@ export default function NoteCard({ note, onEdit, onDelete, onClick }: NoteCardPr
     e.stopPropagation(); // Prevent card click
     togglePinMutation.mutate();
   };
+  
+  // Handle archive toggle
+  const handleArchiveToggle = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    toggleArchiveMutation.mutate();
+  };
 
   // Format timestamp
   const formattedDate = note.updatedAt 
@@ -82,7 +105,9 @@ export default function NoteCard({ note, onEdit, onDelete, onClick }: NoteCardPr
         "p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border w-full min-h-[200px] flex flex-col justify-between",
         note.pinned 
           ? "bg-primary/5 border-primary/30" 
-          : "bg-card border-border"
+          : note.archived
+            ? "bg-amber-50/30 border-amber-200"
+            : "bg-card border-border"
       )}
       onClick={onClick}
     >
@@ -118,6 +143,18 @@ export default function NoteCard({ note, onEdit, onDelete, onClick }: NoteCardPr
             title={note.pinned ? "Unpin note" : "Pin note"}
           >
             <PinIcon className="h-4 w-4" />
+          </button>
+          <button 
+            className={cn(
+              "hover:text-amber-500",
+              note.archived ? "text-amber-500" : "text-gray-500"
+            )}
+            onClick={handleArchiveToggle}
+            aria-label={note.archived ? "Restore note" : "Archive note"}
+            disabled={toggleArchiveMutation.isPending}
+            title={note.archived ? "Restore note" : "Archive note"}
+          >
+            <ArchiveIcon className="h-4 w-4" />
           </button>
           <button 
             className="text-gray-500 hover:text-destructive"
