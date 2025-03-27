@@ -440,7 +440,7 @@ export default function NoteDetail() {
             {isUpdated && ` · Updated ${formatDistanceToNow(updatedAt, { addSuffix: true })}`}
           </div>
           <div className={`prose max-w-none mb-6 ${getFontSizeStyle(fontSize)}`}>
-            {formatContent(note.content)}
+            <MarkdownRenderer text={note.content} className="markdown-content" />
           </div>
         </div>
         
