@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeftIcon, Edit2Icon, Trash2Icon, ZapIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 export default function NoteDetail() {
   const [, navigate] = useLocation();

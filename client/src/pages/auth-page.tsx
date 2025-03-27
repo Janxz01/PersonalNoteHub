@@ -42,7 +42,7 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user, isLoading, loginMutation, registerMutation } = useAuth();
+  const { user, isLoading, login, register, isAuthenticated } = useAuth();
   
   // Check for token in URL from social login callback
   useEffect(() => {
@@ -92,25 +92,38 @@ export default function AuthPage() {
     },
   });
 
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
+  
   const onLoginSubmit = async (data: LoginFormValues) => {
+    setIsLoginLoading(true);
     try {
-      await loginMutation.mutateAsync(data);
+      await login(data.email, data.password);
       // Redirect happens automatically via useEffect
-    } catch (error) {
-      // Error is handled by the mutation's onError
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "An error occurred during login",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoginLoading(false);
     }
   };
 
   const onRegisterSubmit = async (data: RegisterFormValues) => {
+    setIsRegisterLoading(true);
     try {
-      await registerMutation.mutateAsync({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      });
+      await register(data.name, data.email, data.password);
       // Redirect happens automatically via useEffect
-    } catch (error) {
-      // Error is handled by the mutation's onError
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message || "An error occurred during registration",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRegisterLoading(false);
     }
   };
 
@@ -179,9 +192,9 @@ export default function AuthPage() {
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={loginMutation.isPending}
+                    disabled={isLoginLoading}
                   >
-                    {loginMutation.isPending ? (
+                    {isLoginLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Signing in...
@@ -265,9 +278,9 @@ export default function AuthPage() {
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={registerMutation.isPending}
+                    disabled={isRegisterLoading}
                   >
-                    {registerMutation.isPending ? (
+                    {isRegisterLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Creating account...

@@ -194,6 +194,58 @@ export default function NoteEditor({ isOpen, note, onClose }: NoteEditorProps) {
                   const text = field.value;
                   const selectedText = text.substring(start, end);
                   
+                  // If text is already formatted with the same formatting, remove it (toggle behavior)
+                  if (
+                    selectedText.startsWith(prefix) && 
+                    selectedText.endsWith(suffix) && 
+                    selectedText.length >= prefix.length + suffix.length
+                  ) {
+                    // Remove the formatting
+                    const unformattedText = selectedText.slice(prefix.length, selectedText.length - suffix.length);
+                    const newText = text.substring(0, start) + unformattedText + text.substring(end);
+                    
+                    // Update field value
+                    field.onChange(newText);
+                    
+                    // Reset cursor position
+                    setTimeout(() => {
+                      if (textareaRef.current) {
+                        textareaRef.current.focus();
+                        const newCursorPos = start + unformattedText.length;
+                        textareaRef.current.setSelectionRange(start, start + unformattedText.length);
+                      }
+                    }, 0);
+                    return;
+                  }
+                  
+                  // Check if the selection already has this formatting applied
+                  // For example, if the text is already bold and we're trying to make it bold again
+                  const prefixLength = prefix.length;
+                  const suffixLength = suffix.length;
+                  const beforeSelection = text.substring(Math.max(0, start - prefixLength), start);
+                  const afterSelection = text.substring(end, Math.min(text.length, end + suffixLength));
+                  
+                  // If the selection is already surrounded by the formatting markers
+                  if (beforeSelection === prefix && afterSelection === suffix) {
+                    // Remove the formatting by removing prefix and suffix
+                    const newText = text.substring(0, start - prefixLength) + 
+                                    selectedText + 
+                                    text.substring(end + suffixLength);
+                    
+                    // Update field value
+                    field.onChange(newText);
+                    
+                    // Reset cursor position
+                    setTimeout(() => {
+                      if (textareaRef.current) {
+                        textareaRef.current.focus();
+                        textareaRef.current.setSelectionRange(start - prefixLength, end - prefixLength);
+                      }
+                    }, 0);
+                    return;
+                  }
+                  
+                  // Apply the formatting
                   const newText = text.substring(0, start) + 
                                   prefix + selectedText + suffix + 
                                   text.substring(end);
@@ -201,12 +253,18 @@ export default function NoteEditor({ isOpen, note, onClose }: NoteEditorProps) {
                   // Update field value
                   field.onChange(newText);
                   
-                  // Restore focus after React re-renders the component
+                  // Restore focus and maintain selection after React re-renders the component
                   setTimeout(() => {
                     if (textareaRef.current) {
                       textareaRef.current.focus();
-                      const newCursorPos = start + prefix.length + selectedText.length + suffix.length;
-                      textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+                      if (start === end) {
+                        // If no text was selected, place cursor between tags
+                        const newCursorPos = start + prefix.length;
+                        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+                      } else {
+                        // Keep the text selected including the formatting tags
+                        textareaRef.current.setSelectionRange(start, end + prefix.length + suffix.length);
+                      }
                     }
                   }, 0);
                 };

@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 interface NoteCardProps {
   note: Note;
@@ -153,7 +154,18 @@ export default function NoteCard({ note, onEdit, onDelete, onClick }: NoteCardPr
         </div>
         <div className="text-xs text-gray-500">{formattedDate}</div>
       </div>
-      <p className="text-gray-600 text-sm line-clamp-3 mb-3">{note.content}</p>
+      
+      {/* Display content with markdown formatting */}
+      <div className="text-gray-600 text-sm line-clamp-3 mb-3">
+        {/* Only show first 150 characters in card view to keep it compact */}
+        <MarkdownRenderer 
+          text={note.content.length > 150 
+            ? `${note.content.substring(0, 150)}...` 
+            : note.content
+          }
+          className="markdown-content"
+        />
+      </div>
       <div className="flex justify-between items-center">
         <div className="flex space-x-2">
           <button 

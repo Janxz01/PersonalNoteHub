@@ -11,3 +11,38 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Markdown styling */
+  .markdown-content strong {
+    @apply font-bold;
+  }
+  
+  .markdown-content em {
+    @apply italic;
+  }
+  
+  .markdown-content u {
+    @apply underline;
+  }
+  
+  .markdown-content h1 {
+    @apply text-2xl font-bold mt-4 mb-2;
+  }
+  
+  .markdown-content h2 {
+    @apply text-xl font-bold mt-3 mb-2;
+  }
+  
+  .markdown-content h3 {
+    @apply text-lg font-bold mt-2 mb-1;
+  }
+  
+  .markdown-content ul {
+    @apply list-disc pl-5 my-2;
+  }
+  
+  .markdown-content li {
+    @apply my-1;
+  }
+}
