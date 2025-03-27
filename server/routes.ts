@@ -159,9 +159,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let notes = await storage.getNotesByUserId(String(userId));
       console.log("Notes found for user:", notes);
       
-      // Filter by archive status
-      if (!showArchived) {
-        notes = notes.filter(note => !note.archived);
+      // Filter by archive status - only show the correct notes based on archival status
+      if (showArchived) {
+        // Only show archived notes when in archive view
+        notes = notes.filter(note => note.archived === true);
+      } else {
+        // Only show non-archived notes in regular view
+        notes = notes.filter(note => note.archived !== true);
       }
       
       // Filter by label if specified

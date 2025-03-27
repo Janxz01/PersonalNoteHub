@@ -53,8 +53,16 @@ export default function NoteCard({ note, onEdit, onDelete, onClick }: NoteCardPr
       return apiRequest("PATCH", `/api/notes/${note.id}/archive`);
     },
     onSuccess: () => {
+      // Invalidate all note queries to update lists completely
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+      
+      // Invalidate both archived=true and archived=false queries to ensure lists update correctly
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", { archived: true }] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", { archived: false }] });
+      
+      // Invalidate single note view
       queryClient.invalidateQueries({ queryKey: [`/api/notes/${note.id}`] });
+      
       toast({
         title: note.archived ? "Note restored" : "Note archived",
         description: note.archived 

@@ -45,6 +45,8 @@ export default function Notes() {
       return response.json();
     },
     enabled: isAuthenticated,
+    // Add refetch on window focus to ensure lists are updated
+    refetchOnWindowFocus: true
   });
 
   // Log data fetching results
