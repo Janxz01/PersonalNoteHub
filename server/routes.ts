@@ -318,6 +318,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Toggle pin status for a note
+  app.patch("/api/notes/:id/pin", authenticateToken, async (req: Request, res: Response) => {
+    try {
+      const noteId = req.params.id;
+      const userId = (req as any).user.id;
+      
+      // Check if the note exists
+      const note = await storage.getNoteById(noteId);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+      
+      // Check if the user owns the note
+      const userIdNum = typeof note.userId === 'number' ? userId : parseInt(userId, 10);
+      if (note.userId !== userIdNum) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Toggle the pin status
+      const updatedNote = await storage.updateNote(noteId, {
+        ...note,
+        pinned: !note.pinned
+      });
+      
+      if (!updatedNote) {
+        return res.status(500).json({ message: "Failed to update note" });
+      }
+      
+      res.json(updatedNote);
+    } catch (error) {
+      console.error("Error toggling note pin status:", error);
+      res.status(500).json({ message: "Failed to update note" });
+    }
+  });
+  
   // Generate AI summary for note content
   app.post("/api/notes/:id/summary", authenticateToken, async (req: Request, res: Response) => {
     try {

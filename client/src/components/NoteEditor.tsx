@@ -19,6 +19,7 @@ const noteSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }),
   content: z.string().min(1, { message: "Content is required" }),
   generateSummary: z.boolean().optional().default(false),
+  pinned: z.boolean().optional().default(false),
 });
 
 type NoteFormValues = z.infer<typeof noteSchema>;
@@ -40,6 +41,7 @@ export default function NoteEditor({ isOpen, note, onClose }: NoteEditorProps) {
       title: note?.title || "",
       content: note?.content || "",
       generateSummary: false,
+      pinned: note?.pinned || false,
     },
   });
 
@@ -50,12 +52,14 @@ export default function NoteEditor({ isOpen, note, onClose }: NoteEditorProps) {
         title: note.title,
         content: note.content,
         generateSummary: false,
+        pinned: note.pinned || false,
       });
     } else {
       form.reset({
         title: "",
         content: "",
         generateSummary: false,
+        pinned: false,
       });
     }
   }, [note, form]);
@@ -182,23 +186,43 @@ export default function NoteEditor({ isOpen, note, onClose }: NoteEditorProps) {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="generateSummary"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Generate AI summary</FormLabel>
-                  </div>
-                </FormItem>
-              )}
-            />
+            <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-6">
+              <FormField
+                control={form.control}
+                name="generateSummary"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Generate AI summary</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="pinned"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Pin this note</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="flex justify-end space-x-3 mt-6">
               <Button

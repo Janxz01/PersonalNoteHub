@@ -197,6 +197,7 @@ export class MongoStorage implements IStorage {
       title: note.title,
       content: note.content,
       summary: note.summary,
+      pinned: note.pinned || false,
       createdAt: note.createdAt,
       updatedAt: note.updatedAt
     };
@@ -273,6 +274,11 @@ export class MemStorage implements IStorage {
         return match;
       })
       .sort((a, b) => {
+        // First sort by pinned status (pinned notes first)
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        
+        // Then sort by update time (newer first)
         const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
         const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
         return bTime - aTime;
@@ -296,6 +302,7 @@ export class MemStorage implements IStorage {
       title: noteData.title,
       content: noteData.content,
       summary: null,
+      pinned: noteData.pinned || false,
       createdAt: now,
       updatedAt: now
     };
@@ -312,6 +319,7 @@ export class MemStorage implements IStorage {
       ...note,
       title: noteData.title,
       content: noteData.content,
+      pinned: noteData.pinned !== undefined ? noteData.pinned : note.pinned,
       updatedAt: new Date()
     };
     

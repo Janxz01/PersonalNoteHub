@@ -16,6 +16,7 @@ export const notes = pgTable("notes", {
   title: text("title").notNull(),
   content: text("content").notNull(),
   summary: text("summary"),
+  pinned: boolean("pinned").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -37,12 +38,14 @@ export const insertNoteSchema = createInsertSchema(notes).pick({
   title: true,
   content: true,
   summary: true,
+  pinned: true,
 });
 
 export const updateNoteSchema = createInsertSchema(notes).pick({
   title: true,
   content: true,
   summary: true,
+  pinned: true,
 });
 
 // Types

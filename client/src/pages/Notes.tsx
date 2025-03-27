@@ -87,13 +87,24 @@ export default function Notes() {
     }
   };
 
-  // Filter notes by search term
+  // Filter notes by search term and sort (pinned notes first)
   const filteredNotes = Array.isArray(notes)
-    ? notes.filter(
-        (note: Note) =>
-          note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          note.content.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    ? notes
+        .filter(
+          (note: Note) =>
+            note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            note.content.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) => {
+          // Sort by pinned status first (pinned notes first)
+          if (a.pinned && !b.pinned) return -1;
+          if (!a.pinned && b.pinned) return 1;
+          
+          // Then sort by updated date (newest first)
+          const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return dateB - dateA;
+        })
     : [];
 
   // Loading skeletons
