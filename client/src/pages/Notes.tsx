@@ -7,11 +7,13 @@ import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import NoteCard from "@/components/NoteCard";
 import NoteEditor from "@/components/NoteEditor";
+import QRCodeScanner from "@/components/QRCodeScanner";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
 import NoteOfTheDay from "@/components/NoteOfTheDay";
 import { Note } from "@shared/schema";
 import { Input } from "@/components/ui/input";
-import { SearchIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SearchIcon, QrCodeIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Notes() {
@@ -19,6 +21,7 @@ export default function Notes() {
   const { user, isAuthenticated } = useAuth();
   const [showEditor, setShowEditor] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showArchived, setShowArchived] = useState(false);
@@ -267,11 +270,27 @@ export default function Notes() {
         )}
       </main>
 
+      {/* QR Code Scanner Button */}
+      <div className="fixed bottom-8 right-8">
+        <Button 
+          className="rounded-full h-14 w-14 shadow-lg"
+          onClick={() => setShowQRScanner(true)}
+        >
+          <QrCodeIcon className="h-6 w-6" />
+        </Button>
+      </div>
+
       {/* Note Editor Modal */}
       <NoteEditor
         isOpen={showEditor}
         note={currentNote}
         onClose={() => setShowEditor(false)}
+      />
+
+      {/* QR Code Scanner Modal */}
+      <QRCodeScanner
+        isOpen={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
       />
 
       {/* Delete Confirmation Modal */}
