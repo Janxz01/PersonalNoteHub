@@ -6,7 +6,11 @@ import bcrypt from "bcrypt";
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String },  // Not required for social logins
+  googleId: { type: String, unique: true, sparse: true },
+  facebookId: { type: String, unique: true, sparse: true },
+  microsoftId: { type: String, unique: true, sparse: true },
+  avatar: { type: String },  // Profile picture URL
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -24,6 +28,9 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | null>;
   getUserByEmail(email: string): Promise<User | null>;
+  getUserByGoogleId(googleId: string): Promise<User | null>;
+  getUserByFacebookId(facebookId: string): Promise<User | null>;
+  getUserByMicrosoftId(microsoftId: string): Promise<User | null>;
   createUser(user: InsertUser): Promise<User>;
   
   // Note operations
@@ -95,18 +102,61 @@ export class MongoStorage implements IStorage {
     }
   }
   
+  async getUserByGoogleId(googleId: string): Promise<User | null> {
+    try {
+      const user = await this.UserModel.findOne({ googleId }).lean();
+      if (!user) return null;
+      return this.mapUserToSchema(user);
+    } catch (error) {
+      console.error("Error getting user by Google ID:", error);
+      return null;
+    }
+  }
+  
+  async getUserByFacebookId(facebookId: string): Promise<User | null> {
+    try {
+      const user = await this.UserModel.findOne({ facebookId }).lean();
+      if (!user) return null;
+      return this.mapUserToSchema(user);
+    } catch (error) {
+      console.error("Error getting user by Facebook ID:", error);
+      return null;
+    }
+  }
+  
+  async getUserByMicrosoftId(microsoftId: string): Promise<User | null> {
+    try {
+      const user = await this.UserModel.findOne({ microsoftId }).lean();
+      if (!user) return null;
+      return this.mapUserToSchema(user);
+    } catch (error) {
+      console.error("Error getting user by Microsoft ID:", error);
+      return null;
+    }
+  }
+  
   async createUser(userData: InsertUser): Promise<User> {
     try {
-      // Hash password
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
-      
-      // Create new user
-      const user = await this.UserModel.create({
+      // Create user data object
+      const userObj: any = {
         name: userData.name,
         email: userData.email,
-        password: hashedPassword
-      });
+      };
+      
+      // Hash password if provided (not needed for social login)
+      if (userData.password) {
+        const saltRounds = 10;
+        userObj.password = await bcrypt.hash(userData.password, saltRounds);
+      }
+      
+      // Add social login fields if provided
+      if (userData.googleId) userObj.googleId = userData.googleId;
+      if (userData.facebookId) userObj.facebookId = userData.facebookId;
+      if (userData.microsoftId) userObj.microsoftId = userData.microsoftId;
+      if (userData.avatar) userObj.avatar = userData.avatar;
+      
+      // Create new user
+      const user = await this.UserModel.create(userObj);
       
       return this.mapUserToSchema(user.toObject());
     } catch (error) {
@@ -277,6 +327,10 @@ export class MongoStorage implements IStorage {
       name: user.name,
       email: user.email,
       password: user.password,
+      googleId: user.googleId || null,
+      facebookId: user.facebookId || null,
+      microsoftId: user.microsoftId || null,
+      avatar: user.avatar || null,
       createdAt: user.createdAt
     };
   }
@@ -355,19 +409,49 @@ export class MemStorage implements IStorage {
     );
     return user || null;
   }
+  
+  async getUserByGoogleId(googleId: string): Promise<User | null> {
+    const user = Array.from(this.users.values()).find(
+      (user) => user.googleId === googleId
+    );
+    return user || null;
+  }
+  
+  async getUserByFacebookId(facebookId: string): Promise<User | null> {
+    const user = Array.from(this.users.values()).find(
+      (user) => user.facebookId === facebookId
+    );
+    return user || null;
+  }
+  
+  async getUserByMicrosoftId(microsoftId: string): Promise<User | null> {
+    const user = Array.from(this.users.values()).find(
+      (user) => user.microsoftId === microsoftId
+    );
+    return user || null;
+  }
 
   async createUser(userData: InsertUser): Promise<User> {
     const id = this.userId++;
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
     
+    // Create user object with required fields
     const user: User = {
       id,
       name: userData.name,
       email: userData.email,
-      password: hashedPassword,
+      password: null,
+      googleId: userData.googleId || null,
+      facebookId: userData.facebookId || null,
+      microsoftId: userData.microsoftId || null,
+      avatar: userData.avatar || null,
       createdAt: new Date()
     };
+    
+    // Hash password if provided (not needed for social login)
+    if (userData.password) {
+      const saltRounds = 10;
+      user.password = await bcrypt.hash(userData.password, saltRounds);
+    }
     
     this.users.set(String(id), user);
     return user;

@@ -7,6 +7,8 @@ import bcrypt from "bcrypt";
 import { summarizeNote } from "./openai";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import passport from 'passport';
+import { configurePassport, generateToken, authenticateJWT } from './passport';
 
 // JWT secret key - should be in environment variable in production
 const JWT_SECRET = process.env.JWT_SECRET || "notekeeper-secret-key";
@@ -32,6 +34,10 @@ const authenticateToken = (req: Request, res: Response, next: Function) => {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+
+  // Initialize Passport
+  configurePassport();
+  app.use(passport.initialize());
 
   // Error handling middleware
   app.use((err: Error, req: Request, res: Response, next: Function) => {
@@ -636,6 +642,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update note labels" });
     }
   });
+
+  // ===== Social Login Routes =====
+  
+  // Google OAuth routes
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    // Initiate authentication with Google
+    app.get('/api/auth/google', 
+      passport.authenticate('google', { scope: ['profile', 'email'] })
+    );
+    
+    // Handle Google callback
+    app.get('/api/auth/google/callback', 
+      passport.authenticate('google', { session: false, failureRedirect: '/auth' }),
+      (req, res) => {
+        try {
+          // Generate JWT token
+          const token = generateToken(req.user);
+          
+          // Redirect to frontend with token
+          res.redirect(`/?token=${token}`);
+        } catch (error) {
+          console.error('Error in Google authentication callback:', error);
+          res.redirect('/auth?error=authentication_failed');
+        }
+      }
+    );
+  }
+  
+  // Facebook OAuth routes
+  if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
+    // Initiate authentication with Facebook
+    app.get('/api/auth/facebook',
+      passport.authenticate('facebook', { scope: ['email'] })
+    );
+    
+    // Handle Facebook callback
+    app.get('/api/auth/facebook/callback',
+      passport.authenticate('facebook', { session: false, failureRedirect: '/auth' }),
+      (req, res) => {
+        try {
+          // Generate JWT token
+          const token = generateToken(req.user);
+          
+          // Redirect to frontend with token
+          res.redirect(`/?token=${token}`);
+        } catch (error) {
+          console.error('Error in Facebook authentication callback:', error);
+          res.redirect('/auth?error=authentication_failed');
+        }
+      }
+    );
+  }
+  
+  // Microsoft OAuth routes
+  if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
+    // Initiate authentication with Microsoft
+    app.get('/api/auth/microsoft',
+      passport.authenticate('microsoft', { scope: ['user.read'] })
+    );
+    
+    // Handle Microsoft callback
+    app.get('/api/auth/microsoft/callback',
+      passport.authenticate('microsoft', { session: false, failureRedirect: '/auth' }),
+      (req, res) => {
+        try {
+          // Generate JWT token
+          const token = generateToken(req.user);
+          
+          // Redirect to frontend with token
+          res.redirect(`/?token=${token}`);
+        } catch (error) {
+          console.error('Error in Microsoft authentication callback:', error);
+          res.redirect('/auth?error=authentication_failed');
+        }
+      }
+    );
+  }
 
   return httpServer;
 }
