@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,7 +11,18 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { XIcon } from "lucide-react";
+import { 
+  XIcon, 
+  BoldIcon, 
+  ItalicIcon, 
+  UnderlineIcon,
+  Heading1Icon,
+  Heading2Icon,
+  Heading3Icon,
+  ListIcon,
+  TypeIcon
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Note } from "@shared/schema";
 
 // Note form schema
@@ -171,19 +182,133 @@ export default function NoteEditor({ isOpen, note, onClose }: NoteEditorProps) {
             <FormField
               control={form.control}
               name="content"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Content</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Write your note here..."
-                      className="min-h-[200px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+                
+                // Insert formatted text at cursor position
+                const insertFormatting = (prefix: string, suffix: string = '') => {
+                  if (!textareaRef.current) return;
+                  
+                  const start = textareaRef.current.selectionStart;
+                  const end = textareaRef.current.selectionEnd;
+                  const text = field.value;
+                  const selectedText = text.substring(start, end);
+                  
+                  const newText = text.substring(0, start) + 
+                                  prefix + selectedText + suffix + 
+                                  text.substring(end);
+                  
+                  // Update field value
+                  field.onChange(newText);
+                  
+                  // Restore focus after React re-renders the component
+                  setTimeout(() => {
+                    if (textareaRef.current) {
+                      textareaRef.current.focus();
+                      const newCursorPos = start + prefix.length + selectedText.length + suffix.length;
+                      textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+                    }
+                  }, 0);
+                };
+                
+                return (
+                  <FormItem>
+                    <FormLabel>Content</FormLabel>
+                    <div className="space-y-2">
+                      {/* Text formatting toolbar */}
+                      <div className="flex flex-wrap gap-1 p-1 border rounded-md bg-gray-50">
+                        <Button 
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-gray-600"
+                          onClick={() => insertFormatting('# ', '\n')}
+                          title="Heading 1"
+                        >
+                          <Heading1Icon className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-gray-600"
+                          onClick={() => insertFormatting('## ', '\n')}
+                          title="Heading 2"
+                        >
+                          <Heading2Icon className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-gray-600"
+                          onClick={() => insertFormatting('### ', '\n')}
+                          title="Heading 3"
+                        >
+                          <Heading3Icon className="h-4 w-4" />
+                        </Button>
+                        <div className="w-px h-6 bg-gray-300 my-1 mx-1"></div>
+                        <Button 
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-gray-600"
+                          onClick={() => insertFormatting('**', '**')}
+                          title="Bold"
+                        >
+                          <BoldIcon className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-gray-600"
+                          onClick={() => insertFormatting('*', '*')}
+                          title="Italic"
+                        >
+                          <ItalicIcon className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-gray-600"
+                          onClick={() => insertFormatting('__', '__')}
+                          title="Underline"
+                        >
+                          <UnderlineIcon className="h-4 w-4" />
+                        </Button>
+                        <div className="w-px h-6 bg-gray-300 my-1 mx-1"></div>
+                        <Button 
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-gray-600"
+                          onClick={() => insertFormatting('- ', '\n')}
+                          title="Bullet List"
+                        >
+                          <ListIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <FormControl>
+                        <Textarea
+                          placeholder="Write your note here..."
+                          className="min-h-[200px] font-mono text-base"
+                          {...field}
+                          ref={(e) => {
+                            textareaRef.current = e;
+                          }}
+                        />
+                      </FormControl>
+                      <div className="text-xs text-gray-500">
+                        Use markdown-style formatting: # for headings, ** for bold, * for italic
+                      </div>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-6">

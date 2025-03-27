@@ -291,6 +291,9 @@ export class MongoStorage implements IStorage {
       pinned: note.pinned || false,
       labels: note.labels || [],
       archived: note.archived || false,
+      backgroundColor: note.backgroundColor || "#ffffff",
+      fontSize: note.fontSize || "normal",
+      textFormatting: note.textFormatting || "{}",
       createdAt: note.createdAt,
       updatedAt: note.updatedAt
     };
@@ -412,6 +415,9 @@ export class MemStorage implements IStorage {
       pinned: noteData.pinned || false,
       labels: noteData.labels || [],
       archived: noteData.archived || false,
+      backgroundColor: noteData.backgroundColor || "#ffffff",
+      fontSize: noteData.fontSize || "normal",
+      textFormatting: noteData.textFormatting || "{}",
       createdAt: now,
       updatedAt: now
     };
@@ -426,11 +432,14 @@ export class MemStorage implements IStorage {
     
     const updatedNote: Note = {
       ...note,
-      title: noteData.title,
-      content: noteData.content,
+      title: noteData.title || note.title,
+      content: noteData.content || note.content,
       pinned: noteData.pinned !== undefined ? noteData.pinned : note.pinned,
       labels: noteData.labels !== undefined ? noteData.labels : note.labels,
       archived: noteData.archived !== undefined ? noteData.archived : note.archived,
+      backgroundColor: noteData.backgroundColor !== undefined ? noteData.backgroundColor : note.backgroundColor,
+      fontSize: noteData.fontSize !== undefined ? noteData.fontSize : note.fontSize,
+      textFormatting: noteData.textFormatting !== undefined ? noteData.textFormatting : note.textFormatting,
       updatedAt: new Date()
     };
     

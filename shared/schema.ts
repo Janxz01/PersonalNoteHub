@@ -27,6 +27,9 @@ export const notes = pgTable("notes", {
   pinned: boolean("pinned").default(false).notNull(),
   labels: text("labels").array(), // Store label IDs as array
   archived: boolean("archived").default(false).notNull(),
+  backgroundColor: text("background_color").default("#ffffff"), // Default white background
+  fontSize: text("font_size").default("normal"), // Default font size
+  textFormatting: text("text_formatting").default("{}"), // Store text formatting as JSON string
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -62,6 +65,9 @@ export const insertNoteSchema = createInsertSchema(notes).pick({
   pinned: true,
   labels: true,
   archived: true,
+  backgroundColor: true,
+  fontSize: true,
+  textFormatting: true,
 });
 
 export const updateNoteSchema = createInsertSchema(notes).pick({
@@ -71,6 +77,9 @@ export const updateNoteSchema = createInsertSchema(notes).pick({
   pinned: true,
   labels: true,
   archived: true,
+  backgroundColor: true,
+  fontSize: true,
+  textFormatting: true,
 });
 
 // Types

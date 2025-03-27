@@ -107,16 +107,39 @@ export default function NoteCard({ note, onEdit, onDelete, onClick }: NoteCardPr
     ? formatDistanceToNow(new Date(note.updatedAt.toString()), { addSuffix: true })
     : "";
 
+  // Custom styling based on note properties
+  const getNoteBgStyle = () => {
+    // First priority: pinned status
+    if (note.pinned) {
+      return { className: "bg-primary/5 border-primary/30" };
+    }
+    
+    // Second priority: archived status
+    if (note.archived) {
+      return { className: "bg-amber-50/30 border-amber-200" };
+    }
+    
+    // Third priority: custom background color
+    if (note.backgroundColor && note.backgroundColor !== "#ffffff") {
+      return { 
+        className: "border-border",
+        style: { backgroundColor: note.backgroundColor }
+      };
+    }
+    
+    // Default
+    return { className: "bg-card border-border" };
+  };
+  
+  const cardStyle = getNoteBgStyle();
+  
   return (
     <div 
       className={cn(
         "p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border w-full min-h-[200px] flex flex-col justify-between",
-        note.pinned 
-          ? "bg-primary/5 border-primary/30" 
-          : note.archived
-            ? "bg-amber-50/30 border-amber-200"
-            : "bg-card border-border"
+        cardStyle.className
       )}
+      style={cardStyle.style}
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">

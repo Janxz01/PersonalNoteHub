@@ -170,25 +170,189 @@ export default function NoteDetail() {
     );
   }
 
-  const createdAt = new Date(note.createdAt);
-  const updatedAt = new Date(note.updatedAt);
+  // Convert date strings to dates
+  const createdAt = typeof note.createdAt === 'string' 
+    ? new Date(note.createdAt) 
+    : note.createdAt instanceof Date 
+      ? note.createdAt 
+      : new Date();
+  
+  const updatedAt = typeof note.updatedAt === 'string' 
+    ? new Date(note.updatedAt) 
+    : note.updatedAt instanceof Date 
+      ? note.updatedAt 
+      : new Date();
+  
   const isUpdated = createdAt.getTime() !== updatedAt.getTime();
 
-  // Format content for display (preserve newlines)
+  // Format content for display with Markdown-like formatting
   const formatContent = (content: string) => {
-    // Split by newlines and wrap in appropriate HTML
+    if (!content) return null;
+    
+    // Split by newlines and process line by line
     return content.split('\n').map((line, index) => {
-      // Check if it starts with a list marker (-, *, 1., etc.)
+      // Heading processing (# Heading)
+      if (/^#{1,3}\s+/.test(line)) {
+        const level = line.match(/^(#+)/)?.[0].length || 1;
+        const text = line.replace(/^#+\s+/, '');
+        
+        switch(level) {
+          case 1:
+            return <h1 key={index} className="text-2xl font-bold mt-4 mb-2">{text}</h1>;
+          case 2:
+            return <h2 key={index} className="text-xl font-bold mt-3 mb-2">{text}</h2>;
+          case 3:
+            return <h3 key={index} className="text-lg font-bold mt-2 mb-1">{text}</h3>;
+          default:
+            return <p key={index}>{text}</p>;
+        }
+      }
+      
+      // Bullet lists (- Item or * Item)
       if (/^\s*[\-\*]\s+/.test(line)) {
-        return <li key={index}>{line.replace(/^\s*[\-\*]\s+/, '')}</li>;
-      } else if (/^\s*\d+\.\s+/.test(line)) {
-        return <li key={index}>{line.replace(/^\s*\d+\.\s+/, '')}</li>;
-      } else if (line.trim() === '') {
+        const text = line.replace(/^\s*[\-\*]\s+/, '');
+        // Process inline formatting in list items
+        return <li key={index} className="ml-6">{processInlineFormatting(text)}</li>;
+      } 
+      
+      // Numbered lists (1. Item)
+      else if (/^\s*\d+\.\s+/.test(line)) {
+        const text = line.replace(/^\s*\d+\.\s+/, '');
+        return <li key={index} className="ml-6 list-decimal">{processInlineFormatting(text)}</li>;
+      } 
+      
+      // Empty lines
+      else if (line.trim() === '') {
         return <br key={index} />;
-      } else {
-        return <p key={index}>{line}</p>;
+      } 
+      
+      // Regular paragraph with inline formatting
+      else {
+        return <p key={index} className="mb-2">{processInlineFormatting(line)}</p>;
       }
     });
+  };
+  
+  // Process inline formatting (bold, italic, underline)
+  const processInlineFormatting = (text: string) => {
+    // Need to process the text and return an array of strings and JSX elements
+    // This is simplified and doesn't handle nested formatting
+    
+    // Process bold (**text**)
+    if (text.includes('**')) {
+      const parts = text.split(/(\*\*.*?\*\*)/g);
+      return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          // Extract the text between ** markers
+          const boldText = part.slice(2, -2);
+          return <strong key={i} className="font-bold">{boldText}</strong>;
+        }
+        // Check if this part contains italic or underline formatting
+        if (part.includes('*') || part.includes('__')) {
+          return processItalicAndUnderline(part, i);
+        }
+        return part;
+      });
+    }
+    
+    // If no bold formatting, check for italic and underline
+    return processItalicAndUnderline(text, 0);
+  };
+  
+  // Process italic (*text*) and underline (__text__)
+  const processItalicAndUnderline = (text: string, baseKey: number) => {
+    if (!text.includes('*') && !text.includes('__')) return text;
+    
+    // This is a very simplified approach - a real markdown parser would be more robust
+    
+    // Process italic first
+    if (text.includes('*')) {
+      const parts = text.split(/(\*[^*]+\*)/g);
+      return parts.map((part, i) => {
+        if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+          // Extract the text between * markers
+          const italicText = part.slice(1, -1);
+          return <em key={`${baseKey}-${i}`} className="italic">{italicText}</em>;
+        }
+        
+        // Check for underline in remaining text
+        if (part.includes('__')) {
+          return processUnderline(part, `${baseKey}-${i}`);
+        }
+        return part;
+      });
+    }
+    
+    // If no italic, check for underline
+    return processUnderline(text, baseKey);
+  };
+  
+  // Process underline (__text__)
+  const processUnderline = (text: string, baseKey: number | string) => {
+    if (!text.includes('__')) return text;
+    
+    const parts = text.split(/(__[^_]+__)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('__') && part.endsWith('__') && part.length > 4) {
+        // Extract the text between __ markers
+        const underlineText = part.slice(2, -2);
+        return <span key={`${baseKey}-${i}`} className="underline">{underlineText}</span>;
+      }
+      return part;
+    });
+  };
+
+  // State for customization options
+  const [backgroundColor, setBackgroundColor] = useState(note.backgroundColor || "#ffffff");
+  const [fontSize, setFontSize] = useState(note.fontSize || "normal");
+  
+  // Font size options
+  const fontSizeOptions = [
+    { value: "small", label: "Small" },
+    { value: "normal", label: "Normal" },
+    { value: "large", label: "Large" },
+    { value: "x-large", label: "Extra Large" },
+  ];
+  
+  // Background color options with friendly names
+  const backgroundColorOptions = [
+    { value: "#ffffff", label: "White" },
+    { value: "#f3f4f6", label: "Light Gray" },
+    { value: "#fffbeb", label: "Warm Yellow" },
+    { value: "#ecfdf5", label: "Mint Green" },
+    { value: "#f0f9ff", label: "Sky Blue" },
+    { value: "#fef2f2", label: "Soft Red" },
+    { value: "#f5f3ff", label: "Lavender" },
+  ];
+  
+  // Save customization settings
+  const saveCustomizationMutation = useMutation({
+    mutationFn: async () => {
+      if (!noteId) return;
+      return apiRequest("PUT", `/api/notes/${noteId}`, {
+        ...note,
+        backgroundColor,
+        fontSize,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/notes/${noteId}`] });
+      toast({
+        title: "Customization saved",
+        description: "Your note appearance settings have been updated.",
+      });
+    },
+  });
+  
+  // Calculate styles based on font size
+  const getFontSizeStyle = (size: string) => {
+    switch(size) {
+      case "small": return "text-sm";
+      case "normal": return "text-base";
+      case "large": return "text-lg";
+      case "x-large": return "text-xl";
+      default: return "text-base";
+    }
   };
 
   return (
@@ -221,13 +385,60 @@ export default function NoteDetail() {
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        {/* Customization Controls */}
+        <div className="mb-4 bg-gray-50 p-4 rounded-lg border">
+          <h3 className="text-sm font-medium mb-3">Customize Note Appearance</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+              <div className="flex space-x-2">
+                {backgroundColorOptions.map(option => (
+                  <button
+                    key={option.value}
+                    className={`w-8 h-8 rounded-full border ${backgroundColor === option.value ? 'ring-2 ring-primary' : 'ring-0'}`}
+                    style={{ backgroundColor: option.value }}
+                    onClick={() => setBackgroundColor(option.value)}
+                    title={option.label}
+                  />
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Font Size</label>
+              <div className="flex flex-wrap gap-2">
+                {fontSizeOptions.map(option => (
+                  <button
+                    key={option.value}
+                    className={`px-3 py-1 rounded-md text-sm ${fontSize === option.value ? 'bg-primary text-white' : 'bg-gray-200 text-gray-800'}`}
+                    onClick={() => setFontSize(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <Button 
+              onClick={() => saveCustomizationMutation.mutate()}
+              disabled={saveCustomizationMutation.isPending}
+              size="sm"
+            >
+              {saveCustomizationMutation.isPending ? "Saving..." : "Save Appearance"}
+            </Button>
+          </div>
+        </div>
+        
+        <div 
+          className="rounded-lg shadow-md p-6 mb-6"
+          style={{ backgroundColor }}
+        >
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">{note.title}</h2>
           <div className="text-sm text-gray-500 mb-4">
             Created {formatDistanceToNow(createdAt, { addSuffix: true })}
             {isUpdated && ` · Updated ${formatDistanceToNow(updatedAt, { addSuffix: true })}`}
           </div>
-          <div className="prose max-w-none mb-6">
+          <div className={`prose max-w-none mb-6 ${getFontSizeStyle(fontSize)}`}>
             {formatContent(note.content)}
           </div>
         </div>
