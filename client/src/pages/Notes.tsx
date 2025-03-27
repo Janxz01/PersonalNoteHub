@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import NoteCard from "@/components/NoteCard";
 import NoteEditor from "@/components/NoteEditor";
 import DeleteConfirmation from "@/components/DeleteConfirmation";
+import NoteOfTheDay from "@/components/NoteOfTheDay";
 import { Note } from "@shared/schema";
 import { Input } from "@/components/ui/input";
 import { SearchIcon } from "lucide-react";
@@ -107,6 +108,12 @@ export default function Notes() {
               <Skeleton className="h-10 w-64" />
             </div>
           </div>
+          
+          {/* Note of the Day section */}
+          <div className="mb-8">
+            <NoteOfTheDay />
+          </div>
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Skeleton key={i} className="h-48 w-full" />
@@ -123,6 +130,11 @@ export default function Notes() {
       <>
         <Navbar onCreateNote={handleCreateNote} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Note of the Day section */}
+          <div className="mb-8">
+            <NoteOfTheDay />
+          </div>
+          
           <div className="bg-red-50 border border-red-200 rounded-md p-4 my-4">
             <div className="flex">
               <div className="text-red-500">
@@ -172,6 +184,11 @@ export default function Notes() {
               <SearchIcon className="h-5 w-5 text-gray-400" />
             </div>
           </div>
+        </div>
+        
+        {/* Note of the Day section */}
+        <div className="mb-8">
+          <NoteOfTheDay />
         </div>
 
         {filteredNotes.length === 0 ? (
